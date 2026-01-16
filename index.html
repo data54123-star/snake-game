@@ -7,7 +7,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <style>
-        /* --- CSS DESIGN --- */
+        /* --- CSS DESIGN (Identisch zu vorher) --- */
         body {
             background-color: #000000;
             color: #ffffff;
@@ -47,20 +47,19 @@
             box-shadow: 0 0 10px rgba(255, 50, 50, 0.2);
         }
 
-        /* LAYOUT CONTAINER */
+        /* LAYOUT */
         .view {
             display: none;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 1200px; /* Breiter für Startseite + Tabelle */
+            max-width: 1200px;
         }
         .active { display: flex; }
 
-        /* --- NEU: STARTSEITE LAYOUT (Links & Rechts) --- */
         .start-container {
             display: flex;
-            flex-wrap: wrap; /* Damit es auf Handy umbricht */
+            flex-wrap: wrap;
             justify-content: center;
             gap: 50px;
             width: 100%;
@@ -69,13 +68,12 @@
 
         .start-left, .start-right {
             flex: 1;
-            min-width: 300px; /* Mindestbreite, sonst Umbruch */
+            min-width: 300px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        /* EINGABEBEREICH */
         .input-group { margin: 20px 0; text-align: center; }
         input {
             padding: 10px;
@@ -97,7 +95,7 @@
         }
         button.start-btn:hover { background: #222; }
 
-        /* --- NEU: TABELLEN DESIGN --- */
+        /* TABELLE */
         table {
             border-collapse: collapse;
             width: 100%;
@@ -114,10 +112,9 @@
             background-color: #222;
             color: #00ff00;
         }
-        tr:nth-child(even) { background-color: #111; } /* Zebra-Streifen */
+        tr:nth-child(even) { background-color: #111; }
 
-
-        /* --- GAME DESIGN --- */
+        /* GAME */
         #game-info {
             display: flex;
             justify-content: space-between;
@@ -158,7 +155,6 @@
 
         @media (max-width: 1200px) {
             .ctrl-btn { width: 70px; height: 70px; }
-            /* Auf kleinen Screens Tabelle unter Eingabe schieben */
             .start-container { flex-direction: column; align-items: center; }
             .start-right { width: 90%; }
         }
@@ -170,7 +166,6 @@
 
     <div id="start-view" class="view active">
         <h1>MBA SNAKE</h1>
-        
         <div class="start-container">
             <div class="start-left">
                 <div class="input-group">
@@ -179,7 +174,6 @@
                 </div>
                 <button class="start-btn" onclick="startGame()">START GAME</button>
             </div>
-
             <div class="start-right">
                 <h3 style="color: #808080;">TOP 10 BESTENLISTE</h3>
                 <table>
@@ -190,8 +184,7 @@
                             <th>Datum</th>
                         </tr>
                     </thead>
-                    <tbody id="leaderboard-body">
-                        </tbody>
+                    <tbody id="leaderboard-body"></tbody>
                 </table>
             </div>
         </div>
@@ -201,196 +194,18 @@
         <div id="game-info">
             <span id="displayName">Spieler: -</span>
             <span>Score: <span id="score">0</span></span>
-            </div>
-        
+        </div>
         <canvas id="gameCanvas" width="400" height="400"></canvas>
-
         <div class="controls">
             <button class="ctrl-btn up" onclick="changeDirection({keyCode: 38})">▲</button>
             <button class="ctrl-btn left" onclick="changeDirection({keyCode: 37})">◀</button>
             <button class="ctrl-btn down" onclick="changeDirection({keyCode: 40})">▼</button>
             <button class="ctrl-btn right" onclick="changeDirection({keyCode: 39})">▶</button>
         </div>
-        
-        <button onclick="location.reload()" style="margin-top:20px; background:none; color:#888; border:1px solid #333; padding:5px;">Neustart</button>
+        <button onclick="abortGame()" style="margin-top:20px; background:none; color:#888; border:1px solid #333; padding:5px;">Zurück zum Menü</button>
     </div>
 
     <script>
         /* SERVICE WORKER */
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(console.error);
-        }
-
-        /* ONLINE STATUS */
-        function updateStatus() {
-            const anzeige = document.getElementById('status-anzeige');
-            if (navigator.onLine) {
-                anzeige.innerText = "● Online";
-                anzeige.className = "status-online";
-            } else {
-                anzeige.innerText = "○ Offline";
-                anzeige.className = "status-offline";
-            }
-        }
-        window.addEventListener('online', updateStatus);
-        window.addEventListener('offline', updateStatus);
-        updateStatus();
-
-
-        /* --- BESTENLISTE LOGIK --- */
-        // Wir laden die Liste beim Start
-        let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard')) || [];
-        renderLeaderboard();
-
-        function renderLeaderboard() {
-            let tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = ""; // Leer machen
-
-            // Tabelle aufbauen (Top 10)
-            leaderboard.forEach(entry => {
-                let row = `<tr>
-                    <td>${entry.name}</td>
-                    <td>${entry.score}</td>
-                    <td>${entry.date}</td>
-                </tr>`;
-                tbody.innerHTML += row;
-            });
-            
-            if(leaderboard.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='3'>Noch keine Einträge</td></tr>";
-            }
-        }
-
-        function saveScore(name, points) {
-            let date = new Date().toLocaleDateString('de-DE'); // TT.MM.JJJJ
-            
-            // Neuen Eintrag hinzufügen
-            leaderboard.push({ name: name, score: points, date: date });
-
-            // Sortieren (Höchster Score zuerst)
-            leaderboard.sort((a, b) => b.score - a.score);
-
-            // Nur die Top 10 behalten
-            leaderboard = leaderboard.slice(0, 10);
-
-            // Speichern
-            localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
-        }
-
-
-        /* --- GAME LOGIK --- */
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-        
-        let box = 20;
-        let snake = [];
-        let food;
-        let score = 0;
-        let d;
-        let game;
-        let playerName = "";
-
-        function startGame() {
-            let inputName = document.getElementById('playerName').value;
-            if(inputName.trim() === "") {
-                alert("Bitte Namen eingeben!");
-                return;
-            }
-            playerName = inputName;
-            document.getElementById('displayName').innerText = playerName;
-
-            document.getElementById('start-view').classList.remove('active');
-            document.getElementById('game-view').classList.add('active');
-
-            initGame();
-        }
-
-        function initGame() {
-            snake = [];
-            snake[0] = { x: 9 * box, y: 10 * box };
-            score = 0;
-            d = undefined;
-            createFood();
-            if(game) clearInterval(game);
-            game = setInterval(draw, 100);
-        }
-
-        function createFood() {
-            food = {
-                x: Math.floor(Math.random() * 19 + 1) * box,
-                y: Math.floor(Math.random() * 19 + 1) * box
-            };
-            for(let part of snake){
-                if(part.x == food.x && part.y == food.y) createFood();
-            }
-        }
-
-        document.addEventListener("keydown", changeDirection);
-        function changeDirection(event) {
-            let key = event.keyCode;
-            if(key == 37 && d != "RIGHT") d = "LEFT";
-            else if(key == 38 && d != "DOWN") d = "UP";
-            else if(key == 39 && d != "LEFT") d = "RIGHT";
-            else if(key == 40 && d != "UP") d = "DOWN";
-        }
-
-        function collision(head, array) {
-            for(let i = 0; i < array.length; i++) {
-                if(head.x == array[i].x && head.y == array[i].y) return true;
-            }
-            return false;
-        }
-
-        function draw() {
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for(let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = "#00ff00";
-                ctx.strokeStyle = "#000000";
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
-                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
-            }
-
-            ctx.fillStyle = "#ff0000";
-            ctx.fillRect(food.x, food.y, box, box);
-
-            let snakeX = snake[0].x;
-            let snakeY = snake[0].y;
-
-            if(d == "LEFT") snakeX -= box;
-            if(d == "UP") snakeY -= box;
-            if(d == "RIGHT") snakeX += box;
-            if(d == "DOWN") snakeY += box;
-
-            if(snakeX == food.x && snakeY == food.y) {
-                score++;
-                createFood();
-            } else {
-                snake.pop();
-            }
-
-            let newHead = { x: snakeX, y: snakeY };
-
-            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
-                
-                // GAME OVER:
-                clearInterval(game);
-                
-                // 1. Score speichern
-                saveScore(playerName, score);
-                
-                // 2. Alert anzeigen
-                alert("Game Over! Score: " + score);
-                
-                // 3. Seite neu laden (Tabelle wird dann aktualisiert angezeigt)
-                location.reload(); 
-                return;
-            }
-
-            snake.unshift(newHead);
-            document.getElementById("score").innerText = score;
-        }
-    </script>
-</body>
-</html>
+            navigator.
