@@ -3,161 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBA Snake Game</title>
+    <title>MBA Snake Global</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <style>
-        /* --- CSS DESIGN (Identisch zu vorher) --- */
-        body {
-            background-color: #000000;
-            color: #ffffff;
-            font-family: 'Courier New', monospace;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            touch-action: manipulation;
-            position: relative;
-        }
-
-        /* ONLINE STATUS */
-        #status-anzeige {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-        .status-online {
-            background-color: rgba(0, 255, 0, 0.2);
-            border: 1px solid #00ff00;
-            color: #00ff00;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-        }
-        .status-offline {
-            background-color: rgba(255, 50, 50, 0.2);
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            box-shadow: 0 0 10px rgba(255, 50, 50, 0.2);
-        }
-
-        /* LAYOUT */
-        .view {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 1200px;
-        }
+        /* --- CSS BLEIBT IDENTISCH --- */
+        body { background-color: #000; color: #fff; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; touch-action: manipulation; position: relative; }
+        #status-anzeige { position: absolute; top: 20px; right: 20px; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; z-index: 1000; transition: all 0.3s ease; }
+        .status-online { background-color: rgba(0, 255, 0, 0.2); border: 1px solid #00ff00; color: #00ff00; }
+        .status-offline { background-color: rgba(255, 50, 50, 0.2); border: 1px solid #ff4444; color: #ff4444; }
+        .view { display: none; flex-direction: column; align-items: center; width: 100%; max-width: 1200px; }
         .active { display: flex; }
-
-        .start-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 50px;
-            width: 100%;
-            align-items: flex-start;
-        }
-
-        .start-left, .start-right {
-            flex: 1;
-            min-width: 300px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
+        .start-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 50px; width: 100%; align-items: flex-start; }
+        .start-left, .start-right { flex: 1; min-width: 300px; display: flex; flex-direction: column; align-items: center; }
         .input-group { margin: 20px 0; text-align: center; }
-        input {
-            padding: 10px;
-            font-size: 1.2rem;
-            background: #222;
-            border: 2px solid #808080;
-            color: white;
-            text-align: center;
-            width: 200px;
-        }
-        button.start-btn {
-            padding: 15px 30px;
-            font-size: 1.5rem;
-            background: #000;
-            color: #00ff00;
-            border: 2px solid #808080;
-            cursor: pointer;
-            margin-top: 20px;
-        }
+        input { padding: 10px; font-size: 1.2rem; background: #222; border: 2px solid #808080; color: white; text-align: center; width: 200px; }
+        button.start-btn { padding: 15px 30px; font-size: 1.5rem; background: #000; color: #00ff00; border: 2px solid #808080; cursor: pointer; margin-top: 20px; }
         button.start-btn:hover { background: #222; }
-
-        /* TABELLE */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid #808080;
-            color: white;
-        }
-        th, td {
-            border: 1px solid #444;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #222;
-            color: #00ff00;
-        }
+        table { border-collapse: collapse; width: 100%; max-width: 400px; border: 1px solid #808080; color: white; }
+        th, td { border: 1px solid #444; padding: 8px; text-align: center; }
+        th { background-color: #222; color: #00ff00; }
         tr:nth-child(even) { background-color: #111; }
-
-        /* GAME */
-        #game-info {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 400px;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #808080;
-            padding-bottom: 5px;
-        }
-        canvas {
-            border: 4px solid #808080;
-            background-color: #111;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-            max-width: 95vw;
-        }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(2, 60px);
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .ctrl-btn {
-            width: 60px;
-            height: 60px;
-            background: #333;
-            border: 2px solid #808080;
-            color: white;
-            font-size: 1.5rem;
-            border-radius: 10px;
-            cursor: pointer;
-            user-select: none;
-        }
+        #game-info { display: flex; justify-content: space-between; width: 100%; max-width: 400px; margin-bottom: 10px; border-bottom: 2px solid #808080; padding-bottom: 5px; }
+        canvas { border: 4px solid #808080; background-color: #111; max-width: 95vw; }
+        .controls { display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(2, 60px); gap: 10px; margin-top: 20px; }
+        .ctrl-btn { width: 60px; height: 60px; background: #333; border: 2px solid #808080; color: white; font-size: 1.5rem; border-radius: 10px; cursor: pointer; user-select: none; }
         .up { grid-column: 2; grid-row: 1; }
         .left { grid-column: 1; grid-row: 2; }
         .down { grid-column: 2; grid-row: 2; }
         .right { grid-column: 3; grid-row: 2; }
-
-        @media (max-width: 1200px) {
-            .ctrl-btn { width: 70px; height: 70px; }
-            .start-container { flex-direction: column; align-items: center; }
-            .start-right { width: 90%; }
-        }
+        @media (max-width: 1200px) { .ctrl-btn { width: 70px; height: 70px; } .start-container { flex-direction: column; align-items: center; } .start-right { width: 90%; } }
     </style>
 </head>
 <body>
@@ -165,26 +40,20 @@
     <div id="status-anzeige" class="status-online">● Online</div>
 
     <div id="start-view" class="view active">
-        <h1>MBA SNAKE</h1>
+        <h1>MBA SNAKE GLOBAL</h1>
         <div class="start-container">
             <div class="start-left">
                 <div class="input-group">
-                    <p>Bitte Namen eingeben:</p>
+                    <p>Dein Name:</p>
                     <input type="text" id="playerName" placeholder="Spielername">
                 </div>
                 <button class="start-btn" onclick="startGame()">START GAME</button>
             </div>
             <div class="start-right">
-                <h3 style="color: #808080;">TOP 10 BESTENLISTE</h3>
+                <h3 style="color: #808080;">GLOBAL TOP 10</h3>
                 <table>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Score</th>
-                            <th>Datum</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body"></tbody>
+                    <thead><tr><th>Name</th><th>Score</th><th>Datum</th></tr></thead>
+                    <tbody id="leaderboard-body"><tr><td colspan="3">Lade Daten...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -205,53 +74,111 @@
         <button onclick="abortGame()" style="margin-top:20px; background:none; color:#888; border:1px solid #333; padding:5px;">Zurück zum Menü</button>
     </div>
 
+    <script type="module">
+        // 1. Firebase Bibliotheken importieren
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // 2. DEINE KONFIGURATION (HIER EINFÜGEN!)
+        // Kopiere den Block aus der Firebase Console und ersetze diesen Teil:
+        const firebaseConfig = {
+            apiKey: "AIzaSyA1cVZV1VM0EU9fzwseE7wHKFNCtOjnMJ8",
+            authDomain: "mba-snake-db.firebaseapp.com",
+            projectId: "mba-snake-db",
+            storageBucket: "mba-snake-db.firebasestorage.app",
+            messagingSenderId: "446967774494",
+            appId: "1:446967774494:web:531718d984e5dcc1229d0f"
+        };
+
+        // 3. Firebase starten
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Globale Verfügbarkeit für unsere alten Funktionen schaffen
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.limit = limit;
+        window.getDocs = getDocs;
+
+        // Bestenliste sofort laden
+        loadLeaderboard();
+    </script>
+
     <script>
         /* SERVICE WORKER */
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(console.error);
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js').catch(console.error); }
 
         /* STATUS */
         function updateStatus() {
             const anzeige = document.getElementById('status-anzeige');
-            if (navigator.onLine) {
-                anzeige.innerText = "● Online";
-                anzeige.className = "status-online";
-            } else {
-                anzeige.innerText = "○ Offline";
-                anzeige.className = "status-offline";
-            }
+            if (navigator.onLine) { anzeige.innerText = "● Online"; anzeige.className = "status-online"; } 
+            else { anzeige.innerText = "○ Offline"; anzeige.className = "status-offline"; }
         }
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
         updateStatus();
 
-        /* LEADERBOARD */
-        let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard')) || [];
-        renderLeaderboard();
+        /* --- FIREBASE LEADERBOARD LOGIK --- */
+        
+        async function loadLeaderboard() {
+            // Checken ob Firebase schon geladen ist (Module brauchen kurz)
+            if(!window.db) {
+                setTimeout(loadLeaderboard, 500); // Versuch es in 0.5s nochmal
+                return;
+            }
 
-        function renderLeaderboard() {
-            let tbody = document.getElementById('leaderboard-body');
-            tbody.innerHTML = "";
-            leaderboard.forEach(entry => {
-                let row = `<tr><td>${entry.name}</td><td>${entry.score}</td><td>${entry.date}</td></tr>`;
-                tbody.innerHTML += row;
-            });
-            if(leaderboard.length === 0) tbody.innerHTML = "<tr><td colspan='3'>Noch keine Einträge</td></tr>";
-        }
-
-        function saveScore(name, points) {
-            let date = new Date().toLocaleDateString('de-DE');
-            leaderboard.push({ name: name, score: points, date: date });
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 10);
-            localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
+            const tbody = document.getElementById('leaderboard-body');
             
-            // WICHTIG: Tabelle sofort aktualisieren!
-            renderLeaderboard();
+            try {
+                // Die Datenbank fragen: Gib mir Scores, sortiert nach Score (absteigend), maximal 10
+                const q = window.query(window.collection(window.db, "scores"), window.orderBy("score", "desc"), window.limit(10));
+                const querySnapshot = await window.getDocs(q);
+                
+                tbody.innerHTML = ""; // Tabelle leeren
+
+                querySnapshot.forEach((doc) => {
+                    const entry = doc.data();
+                    let row = `<tr><td>${entry.name}</td><td>${entry.score}</td><td>${entry.date}</td></tr>`;
+                    tbody.innerHTML += row;
+                });
+
+                if(querySnapshot.empty) {
+                    tbody.innerHTML = "<tr><td colspan='3'>Noch keine Scores. Sei der Erste!</td></tr>";
+                }
+
+            } catch (error) {
+                console.error("Fehler beim Laden:", error);
+                tbody.innerHTML = "<tr><td colspan='3' style='color:red'>Fehler: Offline oder Datenbank gesperrt</td></tr>";
+            }
         }
 
-        /* GAME LOGIK */
+        async function saveScoreToCloud(name, points) {
+            if(!window.db) return; // Falls offline/Fehler
+            
+            try {
+                let date = new Date().toLocaleDateString('de-DE');
+                
+                // In die Cloud speichern
+                await window.addDoc(window.collection(window.db, "scores"), {
+                    name: name,
+                    score: points,
+                    date: date
+                });
+                
+                // Tabelle neu laden
+                loadLeaderboard();
+                
+            } catch (e) {
+                console.error("Konnte Score nicht speichern: ", e);
+                alert("Du bist offline! Score konnte nicht hochgeladen werden.");
+            }
+        }
+
+
+        /* --- GAME LOGIK (fast unverändert) --- */
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         let box = 20;
@@ -264,10 +191,7 @@
 
         function startGame() {
             let inputName = document.getElementById('playerName').value;
-            if(inputName.trim() === "") {
-                alert("Bitte Namen eingeben!");
-                return;
-            }
+            if(inputName.trim() === "") { alert("Bitte Namen eingeben!"); return; }
             playerName = inputName;
             document.getElementById('displayName').innerText = playerName;
             document.getElementById('start-view').classList.remove('active');
@@ -279,6 +203,7 @@
             clearInterval(game);
             document.getElementById('game-view').classList.remove('active');
             document.getElementById('start-view').classList.add('active');
+            loadLeaderboard(); // Tabelle aktualisieren beim Zurückgehen
         }
 
         function initGame() {
@@ -292,13 +217,8 @@
         }
 
         function createFood() {
-            food = {
-                x: Math.floor(Math.random() * 19 + 1) * box,
-                y: Math.floor(Math.random() * 19 + 1) * box
-            };
-            for(let part of snake) {
-                if(part.x == food.x && part.y == food.y) createFood();
-            }
+            food = { x: Math.floor(Math.random() * 19 + 1) * box, y: Math.floor(Math.random() * 19 + 1) * box };
+            for(let part of snake) { if(part.x == food.x && part.y == food.y) createFood(); }
         }
 
         document.addEventListener("keydown", changeDirection);
@@ -309,63 +229,36 @@
             else if(key == 39 && d != "LEFT") d = "RIGHT";
             else if(key == 40 && d != "UP") d = "DOWN";
         }
-
         function collision(head, array) {
-            for(let i = 0; i < array.length; i++) {
-                if(head.x == array[i].x && head.y == array[i].y) return true;
-            }
+            for(let i = 0; i < array.length; i++) { if(head.x == array[i].x && head.y == array[i].y) return true; }
             return false;
         }
 
         function draw() {
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+            ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
             for(let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = "#00ff00";
-                ctx.strokeStyle = "#000000";
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
-                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+                ctx.fillStyle = "#00ff00"; ctx.strokeStyle = "#000000";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box); ctx.strokeRect(snake[i].x, snake[i].y, box, box);
             }
-
-            ctx.fillStyle = "#ff0000";
-            ctx.fillRect(food.x, food.y, box, box);
-
-            let snakeX = snake[0].x;
-            let snakeY = snake[0].y;
-
-            if(d == "LEFT") snakeX -= box;
-            if(d == "UP") snakeY -= box;
-            if(d == "RIGHT") snakeX += box;
-            if(d == "DOWN") snakeY += box;
-
-            if(snakeX == food.x && snakeY == food.y) {
-                score++;
-                createFood();
-            } else {
-                snake.pop();
-            }
-
+            ctx.fillStyle = "#ff0000"; ctx.fillRect(food.x, food.y, box, box);
+            let snakeX = snake[0].x; let snakeY = snake[0].y;
+            if(d == "LEFT") snakeX -= box; if(d == "UP") snakeY -= box; if(d == "RIGHT") snakeX += box; if(d == "DOWN") snakeY += box;
+            if(snakeX == food.x && snakeY == food.y) { score++; createFood(); } else { snake.pop(); }
             let newHead = { x: snakeX, y: snakeY };
 
             if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
                 
-                // GAME OVER LOGIK (NEU!)
+                // GAME OVER - JETZT MIT CLOUD
                 clearInterval(game);
                 
-                // 1. Speichern (und Tabelle im Hintergrund updaten)
-                saveScore(playerName, score);
+                // 1. In die Cloud speichern!
+                saveScoreToCloud(playerName, score);
                 
-                // 2. Nachricht
                 alert("Game Over! Score: " + score);
-                
-                // 3. Statt 'reload' wechseln wir einfach die Ansicht zurück
                 document.getElementById('game-view').classList.remove('active');
                 document.getElementById('start-view').classList.add('active');
-                
                 return;
             }
-
             snake.unshift(newHead);
             document.getElementById("score").innerText = score;
         }
