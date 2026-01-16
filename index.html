@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBA Snake PWA</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#000000">
+    <style>
+        /* --- CSS DESIGN --- */
+        body {
+            background-color: #000000; /* Schwarz */
+            color: #ffffff;            /* Weiß */
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            touch-action: manipulation; /* Verbessert Touch-Reaktion */
+        }
+
+        /* Container für Startseite und Spiel */
+        .view {
+            display: none; /* Standardmäßig ausgeblendet */
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Die aktive Ansicht anzeigen */
+        .active { display: flex; }
+
+        /* --- STARTSEITE --- */
+        .input-group { margin: 20px 0; text-align: center; }
+        
+        input {
+            padding: 10px;
+            font-size: 1.2rem;
+            background: #222;
+            border: 2px solid #808080; /* Grau */
+            color: white;
+            text-align: center;
+        }
+
+        button.start-btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background: #000;
+            color: #00ff00; /* Hacker-Grün */
+            border: 2px solid #808080;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button.start-btn:hover { background: #222; }
+
+        /* --- SPIELFELD --- */
+        #game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px; /* Breite des Canvas */
+            margin-bottom: 10px;
+            border-bottom: 2px solid #808080;
+            padding-bottom: 5px;
+        }
+
+        canvas {
+            border: 4px solid #808080; /* Grauer Rahmen */
+            background-color: #111;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+            max-width: 95vw; /* Damit es auf Handys passt */
+        }
+
+        /* --- ON-SCREEN CONTROLS (Buttons) --- */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .ctrl-btn {
+            width: 60px;
+            height: 60px;
+            background: #333;
+            border: 2px solid #808080;
+            color: white;
+            font-size: 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none; /* Kein Text markieren beim Tippen */
+        }
+        .ctrl-btn:active { background: #555; }
+        
+        /* Layout der Pfeiltasten */
+        .up { grid-column: 2; grid-row: 1; }
+        .left { grid-column: 1; grid-row: 2; }
+        .down { grid-column: 2; grid-row: 2; }
+        .right { grid-column: 3; grid-row: 2; }
+
+        /* --- RESPONSIVE ANPASSUNG (< 1200px) --- */
+        @media (max-width: 1200px) {
+            /* Hier könnten wir spezifische Anpassungen vornehmen.
+               Da Flexbox das Meiste schon regelt, stellen wir sicher,
+               dass die Controls groß genug sind. */
+            .ctrl-btn {
+                width: 70px;
+                height: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-view" class="view active">
+        <h1>MBA SNAKE</h1>
+        <div class="input-group">
+            <p>Bitte Namen eingeben:</p>
+            <input type="text" id="playerName" placeholder="Spielername">
+        </div>
+        <button class="start-btn" onclick="startGame()">START GAME</button>
+    </div>
+
+    <div id="game-view" class="view">
+        <div id="game-info">
+            <span id="displayName">Spieler: -</span>
+            <span>Score: <span id="score">0</span></span>
+            <span>Best: <span id="highScore">0</span></span>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+        <div class="controls">
+            <button class="ctrl-btn up" onclick="changeDirection({keyCode: 38})">▲</button>
+            <button class="ctrl-btn left" onclick="changeDirection({keyCode: 37})">◀</button>
+            <button class="ctrl-btn down" onclick="changeDirection({keyCode: 40})">▼</button>
+            <button class="ctrl-btn right" onclick="changeDirection({keyCode: 39})">▶</button>
+        </div>
+        
+        <button onclick="location.reload()" style="margin-top:20px; background:none; color:#888; border:1px solid #333; padding:5px;">Neustart</button>
+    </div>
+
+    <script>
+        /* --- SERVICE WORKER REGISTRIEREN (Für Offline/PWA) --- */
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log('Service Worker angemeldet'))
+                .catch(err => console.log('Service Worker Fehler:', err));
+        }
+
+        /* --- SPIEL VARIABLEN --- */
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        
+        let box = 20; // Größe eines Kästchens
+        let snake = [];
+        let food;
+        let score = 0;
+        let d; // Richtung
+        let game; // Der Loop
+        let playerName = "";
+
+        // Highscore aus LocalStorage laden
+        let highScore = localStorage.getItem('snakeHighScore') || 0;
+        document.getElementById('highScore').innerText = highScore;
+
+        /* --- FUNKTIONEN --- */
+
+        function startGame() {
+            let inputName = document.getElementById('playerName').value;
+            if(inputName.trim() === "") {
+                alert("Bitte Namen eingeben!");
+                return;
+            }
+            playerName = inputName;
+            document.getElementById('displayName').innerText = playerName;
+
+            // Ansicht wechseln
+            document.getElementById('start-view').classList.remove('active');
+            document.getElementById('game-view').classList.add('active');
+
+            initGame();
+        }
+
+        function initGame() {
+            // Schlange startet mittig
+            snake = [];
+            snake[0] = { x: 9 * box, y: 10 * box };
+            
+            score = 0;
+            d = undefined; // Keine Bewegung am Anfang
+            createFood();
+            
+            // Spiel-Loop starten (100ms Geschwindigkeit)
+            if(game) clearInterval(game);
+            game = setInterval(draw, 100);
+        }
+
+        function createFood() {
+            food = {
+                x: Math.floor(Math.random() * 19 + 1) * box,
+                y: Math.floor(Math.random() * 19 + 1) * box
+            };
+            // Prüfen, dass Essen nicht in der Schlange spawnt
+            for(let part of snake){
+                if(part.x == food.x && part.y == food.y){
+                    createFood(); 
+                }
+            }
+        }
+
+        // Steuerung per Tastatur
+        document.addEventListener("keydown", changeDirection);
+
+        function changeDirection(event) {
+            let key = event.keyCode;
+            if(key == 37 && d != "RIGHT") d = "LEFT";
+            else if(key == 38 && d != "DOWN") d = "UP";
+            else if(key == 39 && d != "LEFT") d = "RIGHT";
+            else if(key == 40 && d != "UP") d = "DOWN";
+        }
+
+        function collision(head, array) {
+            for(let i = 0; i < array.length; i++) {
+                if(head.x == array[i].x && head.y == array[i].y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function draw() {
+            // 1. Hintergrund zeichnen (Schwarz, Canvas löschen)
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 2. Schlange zeichnen
+            for(let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = "#00ff00"; // Grün
+                // Der Kopf kann eine andere Farbe haben wenn gewünscht, hier alles grün
+                ctx.strokeStyle = "#000000"; // Schwarze Umrandung der Segmente
+                
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            // 3. Apfel zeichnen
+            ctx.fillStyle = "#ff0000"; // Rot
+            ctx.fillRect(food.x, food.y, box, box);
+
+            // 4. Position berechnen
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if(d == "LEFT") snakeX -= box;
+            if(d == "UP") snakeY -= box;
+            if(d == "RIGHT") snakeX += box;
+            if(d == "DOWN") snakeY += box;
+
+            // 5. Logik: Essen oder Bewegen?
+            if(snakeX == food.x && snakeY == food.y) {
+                score++;
+                createFood();
+                // Schlange wächst, also entfernen wir den Schwanz NICHT
+            } else {
+                // Schlange wächst nicht, Schwanz entfernen
+                snake.pop();
+            }
+
+            // 6. Neues Kopf-Element
+            let newHead = { x: snakeX, y: snakeY };
+
+            // 7. Game Over Bedingungen
+            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(game);
+                checkHighScore();
+                alert("Game Over! Score: " + score);
+                location.reload(); // Seite neu laden für Reset
+                return;
+            }
+
+            snake.unshift(newHead);
+
+            // Score im HTML updaten
+            document.getElementById("score").innerText = score;
+        }
+
+        function checkHighScore() {
+            if(score > highScore) {
+                highScore = score;
+                localStorage.setItem('snakeHighScore', highScore);
+                document.getElementById('highScore').innerText = highScore;
+            }
+        }
+    </script>
+</body>
+</html>
