@@ -208,4 +208,167 @@
     <script>
         /* SERVICE WORKER */
         if ('serviceWorker' in navigator) {
-            navigator.
+            navigator.serviceWorker.register('./sw.js').catch(console.error);
+        }
+
+        /* STATUS */
+        function updateStatus() {
+            const anzeige = document.getElementById('status-anzeige');
+            if (navigator.onLine) {
+                anzeige.innerText = "● Online";
+                anzeige.className = "status-online";
+            } else {
+                anzeige.innerText = "○ Offline";
+                anzeige.className = "status-offline";
+            }
+        }
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus();
+
+        /* LEADERBOARD */
+        let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard')) || [];
+        renderLeaderboard();
+
+        function renderLeaderboard() {
+            let tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = "";
+            leaderboard.forEach(entry => {
+                let row = `<tr><td>${entry.name}</td><td>${entry.score}</td><td>${entry.date}</td></tr>`;
+                tbody.innerHTML += row;
+            });
+            if(leaderboard.length === 0) tbody.innerHTML = "<tr><td colspan='3'>Noch keine Einträge</td></tr>";
+        }
+
+        function saveScore(name, points) {
+            let date = new Date().toLocaleDateString('de-DE');
+            leaderboard.push({ name: name, score: points, date: date });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 10);
+            localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
+            
+            // WICHTIG: Tabelle sofort aktualisieren!
+            renderLeaderboard();
+        }
+
+        /* GAME LOGIK */
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let box = 20;
+        let snake = [];
+        let food;
+        let score = 0;
+        let d;
+        let game;
+        let playerName = "";
+
+        function startGame() {
+            let inputName = document.getElementById('playerName').value;
+            if(inputName.trim() === "") {
+                alert("Bitte Namen eingeben!");
+                return;
+            }
+            playerName = inputName;
+            document.getElementById('displayName').innerText = playerName;
+            document.getElementById('start-view').classList.remove('active');
+            document.getElementById('game-view').classList.add('active');
+            initGame();
+        }
+
+        function abortGame() {
+            clearInterval(game);
+            document.getElementById('game-view').classList.remove('active');
+            document.getElementById('start-view').classList.add('active');
+        }
+
+        function initGame() {
+            snake = [];
+            snake[0] = { x: 9 * box, y: 10 * box };
+            score = 0;
+            d = undefined;
+            createFood();
+            if(game) clearInterval(game);
+            game = setInterval(draw, 100);
+        }
+
+        function createFood() {
+            food = {
+                x: Math.floor(Math.random() * 19 + 1) * box,
+                y: Math.floor(Math.random() * 19 + 1) * box
+            };
+            for(let part of snake) {
+                if(part.x == food.x && part.y == food.y) createFood();
+            }
+        }
+
+        document.addEventListener("keydown", changeDirection);
+        function changeDirection(event) {
+            let key = event.keyCode;
+            if(key == 37 && d != "RIGHT") d = "LEFT";
+            else if(key == 38 && d != "DOWN") d = "UP";
+            else if(key == 39 && d != "LEFT") d = "RIGHT";
+            else if(key == 40 && d != "UP") d = "DOWN";
+        }
+
+        function collision(head, array) {
+            for(let i = 0; i < array.length; i++) {
+                if(head.x == array[i].x && head.y == array[i].y) return true;
+            }
+            return false;
+        }
+
+        function draw() {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for(let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = "#00ff00";
+                ctx.strokeStyle = "#000000";
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = "#ff0000";
+            ctx.fillRect(food.x, food.y, box, box);
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if(d == "LEFT") snakeX -= box;
+            if(d == "UP") snakeY -= box;
+            if(d == "RIGHT") snakeX += box;
+            if(d == "DOWN") snakeY += box;
+
+            if(snakeX == food.x && snakeY == food.y) {
+                score++;
+                createFood();
+            } else {
+                snake.pop();
+            }
+
+            let newHead = { x: snakeX, y: snakeY };
+
+            if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                
+                // GAME OVER LOGIK (NEU!)
+                clearInterval(game);
+                
+                // 1. Speichern (und Tabelle im Hintergrund updaten)
+                saveScore(playerName, score);
+                
+                // 2. Nachricht
+                alert("Game Over! Score: " + score);
+                
+                // 3. Statt 'reload' wechseln wir einfach die Ansicht zurück
+                document.getElementById('game-view').classList.remove('active');
+                document.getElementById('start-view').classList.add('active');
+                
+                return;
+            }
+
+            snake.unshift(newHead);
+            document.getElementById("score").innerText = score;
+        }
+    </script>
+</body>
+</html>
