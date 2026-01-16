@@ -19,10 +19,10 @@
             justify-content: center;
             min-height: 100vh;
             touch-action: manipulation;
-            position: relative; /* Wichtig für die absolute Positionierung des Status */
+            position: relative;
         }
 
-        /* --- NEU: ONLINE/OFFLINE STATUS --- */
+        /* ONLINE STATUS */
         #status-anzeige {
             position: absolute;
             top: 20px;
@@ -31,40 +31,52 @@
             border-radius: 20px;
             font-size: 0.9rem;
             font-weight: bold;
-            z-index: 1000; /* Damit es immer über dem Spiel liegt */
-            transition: all 0.3s ease; /* Weicher Farbübergang */
+            z-index: 1000;
+            transition: all 0.3s ease;
         }
-
-        /* Design wenn Online */
         .status-online {
-            background-color: rgba(0, 255, 0, 0.2); /* Halb-transparentes Grün */
+            background-color: rgba(0, 255, 0, 0.2);
             border: 1px solid #00ff00;
             color: #00ff00;
             box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
-
-        /* Design wenn Offline */
         .status-offline {
-            background-color: rgba(255, 50, 50, 0.2); /* Halb-transparentes Rot */
+            background-color: rgba(255, 50, 50, 0.2);
             border: 1px solid #ff4444;
             color: #ff4444;
             box-shadow: 0 0 10px rgba(255, 50, 50, 0.2);
         }
 
-
-        /* --- RESTLICHES DESIGN (Wie vorher) --- */
+        /* LAYOUT CONTAINER */
         .view {
             display: none;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 800px;
+            max-width: 1200px; /* Breiter für Startseite + Tabelle */
         }
-
         .active { display: flex; }
 
+        /* --- NEU: STARTSEITE LAYOUT (Links & Rechts) --- */
+        .start-container {
+            display: flex;
+            flex-wrap: wrap; /* Damit es auf Handy umbricht */
+            justify-content: center;
+            gap: 50px;
+            width: 100%;
+            align-items: flex-start;
+        }
+
+        .start-left, .start-right {
+            flex: 1;
+            min-width: 300px; /* Mindestbreite, sonst Umbruch */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* EINGABEBEREICH */
         .input-group { margin: 20px 0; text-align: center; }
-        
         input {
             padding: 10px;
             font-size: 1.2rem;
@@ -72,8 +84,8 @@
             border: 2px solid #808080;
             color: white;
             text-align: center;
+            width: 200px;
         }
-
         button.start-btn {
             padding: 15px 30px;
             font-size: 1.5rem;
@@ -85,6 +97,27 @@
         }
         button.start-btn:hover { background: #222; }
 
+        /* --- NEU: TABELLEN DESIGN --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #808080;
+            color: white;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #222;
+            color: #00ff00;
+        }
+        tr:nth-child(even) { background-color: #111; } /* Zebra-Streifen */
+
+
+        /* --- GAME DESIGN --- */
         #game-info {
             display: flex;
             justify-content: space-between;
@@ -94,14 +127,12 @@
             border-bottom: 2px solid #808080;
             padding-bottom: 5px;
         }
-
         canvas {
             border: 4px solid #808080;
             background-color: #111;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
             max-width: 95vw;
         }
-
         .controls {
             display: grid;
             grid-template-columns: repeat(3, 60px);
@@ -109,7 +140,6 @@
             gap: 10px;
             margin-top: 20px;
         }
-
         .ctrl-btn {
             width: 60px;
             height: 60px;
@@ -121,8 +151,6 @@
             cursor: pointer;
             user-select: none;
         }
-        .ctrl-btn:active { background: #555; }
-        
         .up { grid-column: 2; grid-row: 1; }
         .left { grid-column: 1; grid-row: 2; }
         .down { grid-column: 2; grid-row: 2; }
@@ -130,6 +158,9 @@
 
         @media (max-width: 1200px) {
             .ctrl-btn { width: 70px; height: 70px; }
+            /* Auf kleinen Screens Tabelle unter Eingabe schieben */
+            .start-container { flex-direction: column; align-items: center; }
+            .start-right { width: 90%; }
         }
     </style>
 </head>
@@ -139,19 +170,38 @@
 
     <div id="start-view" class="view active">
         <h1>MBA SNAKE</h1>
-        <div class="input-group">
-            <p>Bitte Namen eingeben:</p>
-            <input type="text" id="playerName" placeholder="Spielername">
+        
+        <div class="start-container">
+            <div class="start-left">
+                <div class="input-group">
+                    <p>Bitte Namen eingeben:</p>
+                    <input type="text" id="playerName" placeholder="Spielername">
+                </div>
+                <button class="start-btn" onclick="startGame()">START GAME</button>
+            </div>
+
+            <div class="start-right">
+                <h3 style="color: #808080;">TOP 10 BESTENLISTE</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Score</th>
+                            <th>Datum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        </tbody>
+                </table>
+            </div>
         </div>
-        <button class="start-btn" onclick="startGame()">START GAME</button>
     </div>
 
     <div id="game-view" class="view">
         <div id="game-info">
             <span id="displayName">Spieler: -</span>
             <span>Score: <span id="score">0</span></span>
-            <span>Best: <span id="highScore">0</span></span>
-        </div>
+            </div>
         
         <canvas id="gameCanvas" width="400" height="400"></canvas>
 
@@ -166,35 +216,69 @@
     </div>
 
     <script>
-        /* --- 1. SERVICE WORKER --- */
+        /* SERVICE WORKER */
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('Service Worker OK'))
-                .catch(err => console.log('Service Worker Fehler:', err));
+            navigator.serviceWorker.register('./sw.js').catch(console.error);
         }
 
-        /* --- 2. NEU: STATUS LOGIK (Online/Offline) --- */
+        /* ONLINE STATUS */
         function updateStatus() {
             const anzeige = document.getElementById('status-anzeige');
-            
             if (navigator.onLine) {
                 anzeige.innerText = "● Online";
-                anzeige.className = "status-online"; // Grüne Klasse
+                anzeige.className = "status-online";
             } else {
                 anzeige.innerText = "○ Offline";
-                anzeige.className = "status-offline"; // Rote Klasse
+                anzeige.className = "status-offline";
             }
         }
-
-        // Wir lauschen auf Netzwerk-Änderungen
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
-
-        // Einmaliger Check beim Laden
         updateStatus();
 
 
-        /* --- 3. SPIEL LOGIK --- */
+        /* --- BESTENLISTE LOGIK --- */
+        // Wir laden die Liste beim Start
+        let leaderboard = JSON.parse(localStorage.getItem('snakeLeaderboard')) || [];
+        renderLeaderboard();
+
+        function renderLeaderboard() {
+            let tbody = document.getElementById('leaderboard-body');
+            tbody.innerHTML = ""; // Leer machen
+
+            // Tabelle aufbauen (Top 10)
+            leaderboard.forEach(entry => {
+                let row = `<tr>
+                    <td>${entry.name}</td>
+                    <td>${entry.score}</td>
+                    <td>${entry.date}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+            
+            if(leaderboard.length === 0) {
+                tbody.innerHTML = "<tr><td colspan='3'>Noch keine Einträge</td></tr>";
+            }
+        }
+
+        function saveScore(name, points) {
+            let date = new Date().toLocaleDateString('de-DE'); // TT.MM.JJJJ
+            
+            // Neuen Eintrag hinzufügen
+            leaderboard.push({ name: name, score: points, date: date });
+
+            // Sortieren (Höchster Score zuerst)
+            leaderboard.sort((a, b) => b.score - a.score);
+
+            // Nur die Top 10 behalten
+            leaderboard = leaderboard.slice(0, 10);
+
+            // Speichern
+            localStorage.setItem('snakeLeaderboard', JSON.stringify(leaderboard));
+        }
+
+
+        /* --- GAME LOGIK --- */
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         
@@ -205,9 +289,6 @@
         let d;
         let game;
         let playerName = "";
-
-        let highScore = localStorage.getItem('snakeHighScore') || 0;
-        document.getElementById('highScore').innerText = highScore;
 
         function startGame() {
             let inputName = document.getElementById('playerName').value;
@@ -230,7 +311,6 @@
             score = 0;
             d = undefined;
             createFood();
-            
             if(game) clearInterval(game);
             game = setInterval(draw, 100);
         }
@@ -241,14 +321,11 @@
                 y: Math.floor(Math.random() * 19 + 1) * box
             };
             for(let part of snake){
-                if(part.x == food.x && part.y == food.y){
-                    createFood(); 
-                }
+                if(part.x == food.x && part.y == food.y) createFood();
             }
         }
 
         document.addEventListener("keydown", changeDirection);
-
         function changeDirection(event) {
             let key = event.keyCode;
             if(key == 37 && d != "RIGHT") d = "LEFT";
@@ -296,22 +373,23 @@
             let newHead = { x: snakeX, y: snakeY };
 
             if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
+                
+                // GAME OVER:
                 clearInterval(game);
-                checkHighScore();
+                
+                // 1. Score speichern
+                saveScore(playerName, score);
+                
+                // 2. Alert anzeigen
                 alert("Game Over! Score: " + score);
-                location.reload();
+                
+                // 3. Seite neu laden (Tabelle wird dann aktualisiert angezeigt)
+                location.reload(); 
                 return;
             }
 
             snake.unshift(newHead);
             document.getElementById("score").innerText = score;
-        }
-
-        function checkHighScore() {
-            if(score > highScore) {
-                highScore = score;
-                localStorage.setItem('snakeHighScore', highScore);
-            }
         }
     </script>
 </body>
