@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBA Snake PWA</title>
+    <title>MBA Snake Game</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <style>
         /* --- CSS DESIGN --- */
         body {
-            background-color: #000000; /* Schwarz */
-            color: #ffffff;            /* Weiß */
+            background-color: #000000;
+            color: #ffffff;
             font-family: 'Courier New', monospace;
             margin: 0;
             display: flex;
@@ -18,29 +18,58 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            touch-action: manipulation; /* Verbessert Touch-Reaktion */
+            touch-action: manipulation;
+            position: relative; /* Wichtig für die absolute Positionierung des Status */
         }
 
-        /* Container für Startseite und Spiel */
+        /* --- NEU: ONLINE/OFFLINE STATUS --- */
+        #status-anzeige {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 1000; /* Damit es immer über dem Spiel liegt */
+            transition: all 0.3s ease; /* Weicher Farbübergang */
+        }
+
+        /* Design wenn Online */
+        .status-online {
+            background-color: rgba(0, 255, 0, 0.2); /* Halb-transparentes Grün */
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        /* Design wenn Offline */
+        .status-offline {
+            background-color: rgba(255, 50, 50, 0.2); /* Halb-transparentes Rot */
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            box-shadow: 0 0 10px rgba(255, 50, 50, 0.2);
+        }
+
+
+        /* --- RESTLICHES DESIGN (Wie vorher) --- */
         .view {
-            display: none; /* Standardmäßig ausgeblendet */
+            display: none;
             flex-direction: column;
             align-items: center;
             width: 100%;
             max-width: 800px;
         }
 
-        /* Die aktive Ansicht anzeigen */
         .active { display: flex; }
 
-        /* --- STARTSEITE --- */
         .input-group { margin: 20px 0; text-align: center; }
         
         input {
             padding: 10px;
             font-size: 1.2rem;
             background: #222;
-            border: 2px solid #808080; /* Grau */
+            border: 2px solid #808080;
             color: white;
             text-align: center;
         }
@@ -49,32 +78,30 @@
             padding: 15px 30px;
             font-size: 1.5rem;
             background: #000;
-            color: #00ff00; /* Hacker-Grün */
+            color: #00ff00;
             border: 2px solid #808080;
             cursor: pointer;
             margin-top: 20px;
         }
         button.start-btn:hover { background: #222; }
 
-        /* --- SPIELFELD --- */
         #game-info {
             display: flex;
             justify-content: space-between;
             width: 100%;
-            max-width: 400px; /* Breite des Canvas */
+            max-width: 400px;
             margin-bottom: 10px;
             border-bottom: 2px solid #808080;
             padding-bottom: 5px;
         }
 
         canvas {
-            border: 4px solid #808080; /* Grauer Rahmen */
+            border: 4px solid #808080;
             background-color: #111;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-            max-width: 95vw; /* Damit es auf Handys passt */
+            max-width: 95vw;
         }
 
-        /* --- ON-SCREEN CONTROLS (Buttons) --- */
         .controls {
             display: grid;
             grid-template-columns: repeat(3, 60px);
@@ -92,29 +119,23 @@
             font-size: 1.5rem;
             border-radius: 10px;
             cursor: pointer;
-            user-select: none; /* Kein Text markieren beim Tippen */
+            user-select: none;
         }
         .ctrl-btn:active { background: #555; }
         
-        /* Layout der Pfeiltasten */
         .up { grid-column: 2; grid-row: 1; }
         .left { grid-column: 1; grid-row: 2; }
         .down { grid-column: 2; grid-row: 2; }
         .right { grid-column: 3; grid-row: 2; }
 
-        /* --- RESPONSIVE ANPASSUNG (< 1200px) --- */
         @media (max-width: 1200px) {
-            /* Hier könnten wir spezifische Anpassungen vornehmen.
-               Da Flexbox das Meiste schon regelt, stellen wir sicher,
-               dass die Controls groß genug sind. */
-            .ctrl-btn {
-                width: 70px;
-                height: 70px;
-            }
+            .ctrl-btn { width: 70px; height: 70px; }
         }
     </style>
 </head>
 <body>
+
+    <div id="status-anzeige" class="status-online">● Online</div>
 
     <div id="start-view" class="view active">
         <h1>MBA SNAKE</h1>
@@ -145,30 +166,48 @@
     </div>
 
     <script>
-        /* --- SERVICE WORKER REGISTRIEREN (Für Offline/PWA) --- */
+        /* --- 1. SERVICE WORKER --- */
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log('Service Worker angemeldet'))
+                .then(() => console.log('Service Worker OK'))
                 .catch(err => console.log('Service Worker Fehler:', err));
         }
 
-        /* --- SPIEL VARIABLEN --- */
+        /* --- 2. NEU: STATUS LOGIK (Online/Offline) --- */
+        function updateStatus() {
+            const anzeige = document.getElementById('status-anzeige');
+            
+            if (navigator.onLine) {
+                anzeige.innerText = "● Online";
+                anzeige.className = "status-online"; // Grüne Klasse
+            } else {
+                anzeige.innerText = "○ Offline";
+                anzeige.className = "status-offline"; // Rote Klasse
+            }
+        }
+
+        // Wir lauschen auf Netzwerk-Änderungen
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+
+        // Einmaliger Check beim Laden
+        updateStatus();
+
+
+        /* --- 3. SPIEL LOGIK --- */
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         
-        let box = 20; // Größe eines Kästchens
+        let box = 20;
         let snake = [];
         let food;
         let score = 0;
-        let d; // Richtung
-        let game; // Der Loop
+        let d;
+        let game;
         let playerName = "";
 
-        // Highscore aus LocalStorage laden
         let highScore = localStorage.getItem('snakeHighScore') || 0;
         document.getElementById('highScore').innerText = highScore;
-
-        /* --- FUNKTIONEN --- */
 
         function startGame() {
             let inputName = document.getElementById('playerName').value;
@@ -179,7 +218,6 @@
             playerName = inputName;
             document.getElementById('displayName').innerText = playerName;
 
-            // Ansicht wechseln
             document.getElementById('start-view').classList.remove('active');
             document.getElementById('game-view').classList.add('active');
 
@@ -187,15 +225,12 @@
         }
 
         function initGame() {
-            // Schlange startet mittig
             snake = [];
             snake[0] = { x: 9 * box, y: 10 * box };
-            
             score = 0;
-            d = undefined; // Keine Bewegung am Anfang
+            d = undefined;
             createFood();
             
-            // Spiel-Loop starten (100ms Geschwindigkeit)
             if(game) clearInterval(game);
             game = setInterval(draw, 100);
         }
@@ -205,7 +240,6 @@
                 x: Math.floor(Math.random() * 19 + 1) * box,
                 y: Math.floor(Math.random() * 19 + 1) * box
             };
-            // Prüfen, dass Essen nicht in der Schlange spawnt
             for(let part of snake){
                 if(part.x == food.x && part.y == food.y){
                     createFood(); 
@@ -213,7 +247,6 @@
             }
         }
 
-        // Steuerung per Tastatur
         document.addEventListener("keydown", changeDirection);
 
         function changeDirection(event) {
@@ -226,33 +259,25 @@
 
         function collision(head, array) {
             for(let i = 0; i < array.length; i++) {
-                if(head.x == array[i].x && head.y == array[i].y) {
-                    return true;
-                }
+                if(head.x == array[i].x && head.y == array[i].y) return true;
             }
             return false;
         }
 
         function draw() {
-            // 1. Hintergrund zeichnen (Schwarz, Canvas löschen)
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // 2. Schlange zeichnen
             for(let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = "#00ff00"; // Grün
-                // Der Kopf kann eine andere Farbe haben wenn gewünscht, hier alles grün
-                ctx.strokeStyle = "#000000"; // Schwarze Umrandung der Segmente
-                
+                ctx.fillStyle = "#00ff00";
+                ctx.strokeStyle = "#000000";
                 ctx.fillRect(snake[i].x, snake[i].y, box, box);
                 ctx.strokeRect(snake[i].x, snake[i].y, box, box);
             }
 
-            // 3. Apfel zeichnen
-            ctx.fillStyle = "#ff0000"; // Rot
+            ctx.fillStyle = "#ff0000";
             ctx.fillRect(food.x, food.y, box, box);
 
-            // 4. Position berechnen
             let snakeX = snake[0].x;
             let snakeY = snake[0].y;
 
@@ -261,31 +286,24 @@
             if(d == "RIGHT") snakeX += box;
             if(d == "DOWN") snakeY += box;
 
-            // 5. Logik: Essen oder Bewegen?
             if(snakeX == food.x && snakeY == food.y) {
                 score++;
                 createFood();
-                // Schlange wächst, also entfernen wir den Schwanz NICHT
             } else {
-                // Schlange wächst nicht, Schwanz entfernen
                 snake.pop();
             }
 
-            // 6. Neues Kopf-Element
             let newHead = { x: snakeX, y: snakeY };
 
-            // 7. Game Over Bedingungen
             if(snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
                 clearInterval(game);
                 checkHighScore();
                 alert("Game Over! Score: " + score);
-                location.reload(); // Seite neu laden für Reset
+                location.reload();
                 return;
             }
 
             snake.unshift(newHead);
-
-            // Score im HTML updaten
             document.getElementById("score").innerText = score;
         }
 
@@ -293,7 +311,6 @@
             if(score > highScore) {
                 highScore = score;
                 localStorage.setItem('snakeHighScore', highScore);
-                document.getElementById('highScore').innerText = highScore;
             }
         }
     </script>
