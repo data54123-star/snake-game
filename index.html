@@ -52,8 +52,16 @@
             <div class="start-right">
                 <h3 style="color: #808080;">GLOBAL TOP 10</h3>
                 <table>
-                    <thead><tr><th>Name</th><th>Score</th><th>Datum</th></tr></thead>
-                    <tbody id="leaderboard-body"><tr><td colspan="3">Lade Daten...</td></tr></tbody>
+                    <thead>
+                        <tr>
+                            <th>#</th>    <th>Name</th>
+                            <th>Score</th>
+                            <th>Datum</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="4">Lade Daten...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -139,19 +147,33 @@
                 
                 tbody.innerHTML = ""; // Tabelle leeren
 
+                //NEU: Zähler bei 1 starten
+                let rank = 1;
+
                 querySnapshot.forEach((doc) => {
                     const entry = doc.data();
-                    let row = `<tr><td>${entry.name}</td><td>${entry.score}</td><td>${entry.date}</td></tr>`;
+                    let row = `<tr>
+                        <td>${rank}.</td>
+                        <td>${entry.name}</td>
+                        <td>${entry.score}</td>
+                        <td>${entry.date}</td>
+                    </tr>`;
+
                     tbody.innerHTML += row;
+
+                    // NEU: Zähler hochzählen
+                    rank++;
                 });
 
                 if(querySnapshot.empty) {
-                    tbody.innerHTML = "<tr><td colspan='3'>Noch keine Scores. Sei der Erste!</td></tr>";
+                    // NEU: colspan auf 4 angepasst
+                    tbody.innerHTML = "<tr><td colspan='4'>Noch keine Scores. Sei der Erste!</td></tr>";
                 }
 
             } catch (error) {
                 console.error("Fehler beim Laden:", error);
-                tbody.innerHTML = "<tr><td colspan='3' style='color:red'>Fehler: Offline oder Datenbank gesperrt</td></tr>";
+                //NEU: colspan auf 4 angepasst
+                tbody.innerHTML = "<tr><td colspan='4' style='color:red'>Fehler: Offline oder Datenbank gesperrt</td></tr>";
             }
         }
 
